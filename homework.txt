@@ -1,33 +1,30 @@
 create table if not exists Genre ( 
 id SERIAL primary key,
-name VARCHAR(30) not null
+name VARCHAR(30) not null unique
 );
 
 create table if not exists Artist ( 
 id SERIAL primary key,
-name VARCHAR(30) not null,
-genre_id INTEGER references Genre(id)
+name VARCHAR(30) not null unique
 );
 
 create table if not exists Album ( 
 id SERIAL primary key,
-name VARCHAR(30) not null,
-year_release INTEGER not null,
-artist_id INTEGER references Artist(id)
+name VARCHAR(30) not null unique,
+year_release INTEGER not null
 );
 
 create table if not exists Track ( 
 id SERIAL primary key,
 name VARCHAR(30) not null,
 album_id INTEGER references Album(id),
-duration INTEGER not null
+duration INTEGER NOT null check (duration > 0)
 );
 
 create table if not exists Collection ( 
 id SERIAL primary key,
 name VARCHAR(30) not null,
-track_id INTEGER references Track(id),
-year_release INTEGER not null
+year_release INTEGER NOT null check (year_release > 0)
 );
 
 create table if not exists ArtistGenre ( 
