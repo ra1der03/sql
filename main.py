@@ -18,8 +18,8 @@ def create_numbers(cursor, phone, owner_id):
 def createclient(cursor, first_name, last_name, email, phone=None):
     cursor.execute('''INSERT INTO client(first_name, last_name, email) VALUES(%s,%s,%s);
         ''',(first_name, last_name, email, ))
-    cursor.execute('''UPDATE client SET phone_number = number FROM phone_numbers 
-                      WHERE id(client) = owner_id(phone_numbers)  ''')
+    # cursor.execute('''UPDATE client SET phone_number = number FROM phone_numbers
+    #                   WHERE id(client) = owner_id(phone_numbers)  ''')
     cursor.execute('''SELECT * FROM client;
         ''')
     print(cursor.fetchall())
@@ -44,9 +44,9 @@ def addnumberclient(cursor, id, phone=None):
             pass
     cursor.execute("""INSERT INTO phone_numbers(number, owner_id) VALUES(%s, %s);""",(phone, id, ))
     # cursor.execute('''UPDATE client SET phone_number=%s WHERE id=%s;''',(phones,id, ))
-    cursor.execute('''UPDATE client SET phone_number = number FROM phone_numbers  
-                      WHERE id(client) = owner_id(phone_numbers)  ''')
-    cursor.execute('''SELECT * FROM client;''')
+    cursor.execute('''SELECT * FROM phone_numbers;''')
+    cursor.execute('''SELECT id(client), first_name, last_name, email, number 
+    FROM client INNER JOIN phone_numbers on id(client)=owner_id;''')
     print(cursor.fetchall())
 
 
@@ -64,7 +64,8 @@ def changeclient(cursor,id, name1=None, name2=None, email=None, phone=None):
             pass
     cursor.execute('''UPDATE client SET first_name=%s, last_name=%s, email=%s, phone_number=%s WHERE id=%s;
         ''',(mass[0], mass[1], mass[2], mass[3],id))
-    cursor.execute('''SELECT * FROM client;
+    cursor.execute('''SELECT id(client), first_name, last_name, email, number
+     FROM client INNER JOIN phone_numbers on id(client)=owner_id;
             ''')
     print(cursor.fetchall())
 
@@ -74,7 +75,8 @@ def deletenumberclient(cursor, id, phone):
     cursor.execute('''DELETE from phone_numbers WHERE number=%s and owner_id=%s;
         ''',(phone, id,))
     addnumberclient(cursor, id)
-    cursor.execute('''SELECT * FROM client;
+    cursor.execute('''SELECT id(client), first_name, last_name, email, number 
+    FROM client INNER JOIN phone_numbers on id(client)=owner_id;
         ''')
     print(cursor.fetchall())
 
@@ -82,7 +84,8 @@ def deletenumberclient(cursor, id, phone):
 def deleteclient(cursor, id):
     cursor.execute('''DELETE from client WHERE id=%s;
         ''',(id,))
-    cursor.execute('''SELECT * FROM client;
+    cursor.execute('''SELECT id(client), first_name, last_name, email, number
+     FROM client INNER JOIN phone_numbers on id(client)=owner_id;
         ''')
     print(cursor.fetchall())
 
@@ -90,7 +93,7 @@ def deleteclient(cursor, id):
 # найти клиента по номеру
 
 def findclient(cursor, first_name=None, last_name=None, email=None, phone_number=None):
-    names=['first_name','last_name','email','phone_number']
+    names=['first_name','last_name','email','number']
     counter, list=0,[]
     mass=[first_name,last_name, email, phone_number]
     for i, ob in enumerate(mass, 0):
@@ -111,7 +114,9 @@ def findclient(cursor, first_name=None, last_name=None, email=None, phone_number
         else:
             sql+='='+"'"+str(word)+"'"
 
-    cursor.execute('''SELECT * FROM client where ''' + sql)
+    cursor.execute('''SELECT id(client), first_name, last_name, email, number 
+    FROM client INNER JOIN phone_numbers on id(client)=owner_id 
+    where ''' + sql)
     print(cursor.fetchall())
 
 # вызовы функций
@@ -123,25 +128,19 @@ if __name__ == "__main__":
                 id serial PRIMARY KEY,
                 first_name VARCHAR(30),
                 last_name VARCHAR(30),
-                email VARCHAR(30),
-                phone_number TEXT);'''))
+                email VARCHAR(30));'''))
         createtable(cur, ('''CREATE TABLE IF NOT EXISTS phone_numbers(id serial, number TEXT ,
-                 owner_id INTEGER UNIQUE primary key, FOREIGN KEY(owner_id) REFERENCES client(id));'''))
-        cur.execute('''ALTER TABLE phone_numbers DROP CONSTRAINT phone_numbers_owner_id_fkey; 
-        ALTER TABLE phone_numbers DROP CONSTRAINT phone_numbers_pkey;''')
+                 owner_id INTEGER NOT NULL REFERENCES client(id));'''))
+        # cur.execute('''ALTER TABLE phone_numbers DROP CONSTRAINT phone_numbers_owner_id_fkey;
+        # ALTER TABLE phone_numbers DROP CONSTRAINT phone_numbers_pkey;''')
 
-        create_numbers(cur,  '47625348', 1)
-        create_numbers(cur, '34243438', 1)
-        create_numbers(cur, '78137892', 2)
-        create_numbers(cur, '19236819', 3)
-
-        createclient(cur, 'Mark', 'Mope', 'sshdha@gmail.com')
-        createclient(cur, 'David', 'Rod', 'sknesafa@gmail.com')
+        createclient(cur, 'Mark', 'Mope', 'sshdha@gmail.com')     
+        createclient(cur, 'David', 'Rod', 'sknesafa@gmail.com')   
         createclient(cur, 'Mikkey', 'Rurk', 'bwhjdsda@gmail.com' )
 
-        addnumberclient(cur, 1)
-        addnumberclient(cur, 2)
-        addnumberclient(cur, 3, 727723747)
+        addnumberclient(cur, 1, 47625348)
+        addnumberclient(cur, 1, 34243438)
+        addnumberclient(cur, 2, 727723747)
         addnumberclient(cur, 3, 276363)
 
         # changeclient(cur,  3,'Mikkey', phone='2039823473,28172834')
@@ -150,5 +149,5 @@ if __name__ == "__main__":
 
         # deleteclient(cur, 1)
 
-        findclient(cur, email='sshdha@gmail.com', phone_number=34243438)
+        findclient(cur, email='sshdha@gmail.com', phone_number='34243438')
 
