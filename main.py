@@ -1,153 +1,74 @@
-import psycopg2
+import sqlalchemy
+from sqlalchemy.orm import sessionmaker
 
-conn=psycopg2.connect(database='lesson', user='postgres', password='q1w2e3r4t5y')
+from models import Create_tables, Publisher, Book, Stock, Shop, Sale
 
-# создание таблицы
+DSN = 'postgresql://postgres:q1w2e3r4t5y@localhost:5432/orm_testing'
+engine = sqlalchemy.create_engine(DSN)
 
-def createtable(cursor, query):
-        cursor.execute(query)
+Create_tables(engine)
 
-# добавление нового клиента\номера
+Session = sessionmaker(bind=engine)
+session = Session()
 
-def create_numbers(cursor, phone, owner_id):
-    cursor.execute('''INSERT INTO phone_numbers(number, owner_id) VALUES(%s, %s);
-        ''',(phone, owner_id, ))
-    cursor.execute('''SELECT * FROM phone_numbers;
-        ''')
-    print(cursor.fetchall())
-def createclient(cursor, first_name, last_name, email, phone=None):
-    cursor.execute('''INSERT INTO client(first_name, last_name, email) VALUES(%s,%s,%s);
-        ''',(first_name, last_name, email, ))
-    # cursor.execute('''UPDATE client SET phone_number = number FROM phone_numbers
-    #                   WHERE id(client) = owner_id(phone_numbers)  ''')
-    cursor.execute('''SELECT * FROM client;
-        ''')
-    print(cursor.fetchall())
-
-# добавить номер клиента
-
-def addnumberclient(cursor, id, phone=None):
-    cursor.execute("""SELECT * FROM phone_numbers WHERE owner_id=%s;""", (id,))
-    f = cursor.fetchall()
-    phones = []
-    for word in f:
-        if phone == word[1]:
-            break
-        elif phone == None:
-            phones.append(word[1])
-        elif phone!=None and phone not in phones:
-            phones.append(word[1])
-            phones.append(phone)
-        elif phone!=None:
-            phones.append(word[1])
-        else:
-            pass
-    cursor.execute("""INSERT INTO phone_numbers(number, owner_id) VALUES(%s, %s);""",(phone, id, ))
-    # cursor.execute('''UPDATE client SET phone_number=%s WHERE id=%s;''',(phones,id, ))
-    cursor.execute('''SELECT * FROM phone_numbers;''')
-    cursor.execute('''SELECT id(client), first_name, last_name, email, number 
-    FROM client INNER JOIN phone_numbers on id(client)=owner_id;''')
-    print(cursor.fetchall())
+publisher1 = Publisher(name='Александр Пушкин')
+publisher2 = Publisher(name='Джек Лондон')
+publisher3 = Publisher(name='Айн Ренд')
+session.add_all([publisher1, publisher2, publisher3])
 
 
-# изменение данных о клиенте
-
-def changeclient(cursor,id, name1=None, name2=None, email=None, phone=None):
-    cursor.execute('''SELECT * FROM client where id=%s;
-                ''',(id,))
-    f=(cursor.fetchall())
-    mass=[name1,name2, email, phone]
-    for i, ob in enumerate(mass):
-        if ob==None:
-            mass[i]=f[0][i+1]
-        else:
-            pass
-    cursor.execute('''UPDATE client SET first_name=%s, last_name=%s, email=%s, phone_number=%s WHERE id=%s;
-        ''',(mass[0], mass[1], mass[2], mass[3],id))
-    cursor.execute('''SELECT id(client), first_name, last_name, email, number
-     FROM client INNER JOIN phone_numbers on id(client)=owner_id;
-            ''')
-    print(cursor.fetchall())
-
-# удаление номера клиента
-
-def deletenumberclient(cursor, id, phone):
-    cursor.execute('''DELETE from phone_numbers WHERE number=%s and owner_id=%s;
-        ''',(phone, id,))
-    addnumberclient(cursor, id)
-    cursor.execute('''SELECT id(client), first_name, last_name, email, number 
-    FROM client INNER JOIN phone_numbers on id(client)=owner_id;
-        ''')
-    print(cursor.fetchall())
-
-# удаление клиента
-def deleteclient(cursor, id):
-    cursor.execute('''DELETE from client WHERE id=%s;
-        ''',(id,))
-    cursor.execute('''SELECT id(client), first_name, last_name, email, number
-     FROM client INNER JOIN phone_numbers on id(client)=owner_id;
-        ''')
-    print(cursor.fetchall())
+book1 = Book(name='Капитанская дочка', publisher=publisher1)
+book2 = Book(name='Руслан и Людмила', publisher=publisher1)
+book3 = Book(name='Евгений Онегин', publisher=publisher1)
+book4 = Book(name='Мартин Иден', publisher=publisher2)
+book5 = Book(name='Морской волк', publisher=publisher2)
+book6 = Book(name='Зов предков', publisher=publisher2)
+book7 = Book(name='Источник', publisher=publisher3)
+book8 = Book(name='Атлант расправил плечи', publisher=publisher3)
+book9 = Book(name='Мы, живые', publisher=publisher3)
 
 
-# найти клиента по номеру
+shop1 = Shop(name='Буквоед')
+shop2 = Shop(name='Подписные издания')
+shop3 = Shop(name='АльпинаКнига')
+session.add_all([book1, book2, book3, book4, book5, book6, book7, book8, book9, shop1, shop2, shop3])
 
-def findclient(cursor, first_name=None, last_name=None, email=None, phone_number=None):
-    names=['first_name','last_name','email','number']
-    counter, list=0,[]
-    mass=[first_name,last_name, email, phone_number]
-    for i, ob in enumerate(mass, 0):
-        if ob!=None:
-            list.append(names[i])
-            list.append(ob)
-        else:
-            pass
-    sql=''
-    print(list) 
-    for i, word in enumerate(list, 0):
-        if i%2==0 and i<1:
-            sql+=word
-        elif i%2==0 and i>1:
-            sql+='AND '+str(word)
-        elif i%2!=0 and len(list)>2:
-            sql+="='"+str(word)+"' "
-        else:
-            sql+='='+"'"+str(word)+"'"
 
-    cursor.execute('''SELECT id(client), first_name, last_name, email, number 
-    FROM client INNER JOIN phone_numbers on id(client)=owner_id 
-    where ''' + sql)
-    print(cursor.fetchall())
+stock1 = Stock(book=book1, shop=shop1, count=11)
+stock2 = Stock(book=book2, shop=shop1, count=10)
+stock3 = Stock(book=book3, shop=shop1, count=9)
+stock4 = Stock(book=book4, shop=shop2, count=21)
+stock5 = Stock(book=book5, shop=shop2, count=12)
+stock6 = Stock(book=book6, shop=shop2, count=13)
+stock7 = Stock(book=book7, shop=shop3, count=9)
+stock8 = Stock(book=book8, shop=shop3, count=8)
+stock9 = Stock(book=book9, shop=shop3, count=14)
+session.add_all([stock1, stock2, stock3, stock4, stock5, stock6, stock7, stock8, stock9])
 
-# вызовы функций
 
-if __name__ == "__main__":
-    with conn.cursor() as cur:
-        cur.execute('drop table client cascade')
-        createtable(cur, ('''CREATE TABLE IF NOT EXISTS client(
-                id serial PRIMARY KEY,
-                first_name VARCHAR(30),
-                last_name VARCHAR(30),
-                email VARCHAR(30));'''))
-        createtable(cur, ('''CREATE TABLE IF NOT EXISTS phone_numbers(id serial, number TEXT ,
-                 owner_id INTEGER NOT NULL REFERENCES client(id));'''))
-        # cur.execute('''ALTER TABLE phone_numbers DROP CONSTRAINT phone_numbers_owner_id_fkey;
-        # ALTER TABLE phone_numbers DROP CONSTRAINT phone_numbers_pkey;''')
+sale1 = Sale(price=300, date_sale='2024-01-02', stock=stock1, count=1)
+sale2 = Sale(price=400, date_sale='2024-01-02', stock=stock2, count=1)
+sale3 = Sale(price=250, date_sale='2024-01-08', stock=stock3, count=1)
+sale4 = Sale(price=500, date_sale='2024-01-03', stock=stock4, count=1)
+sale5 = Sale(price=600, date_sale='2024-01-04', stock=stock5, count=1)
+sale6 = Sale(price=700, date_sale='2024-01-05', stock=stock6, count=1)
+sale7 = Sale(price=800, date_sale='2024-01-10', stock=stock7, count=1)
+sale8 = Sale(price=900, date_sale='2024-01-06', stock=stock8, count=1)
+sale9 = Sale(price=750, date_sale='2024-01-11', stock=stock9, count=1)
 
-        createclient(cur, 'Mark', 'Mope', 'sshdha@gmail.com')     
-        createclient(cur, 'David', 'Rod', 'sknesafa@gmail.com')   
-        createclient(cur, 'Mikkey', 'Rurk', 'bwhjdsda@gmail.com' )
 
-        addnumberclient(cur, 1, 47625348)
-        addnumberclient(cur, 1, 34243438)
-        addnumberclient(cur, 2, 727723747)
-        addnumberclient(cur, 3, 276363)
+session.add_all([sale1, sale2, sale3, sale4, sale5, sale6, sale7, sale8, sale9])
 
-        # changeclient(cur,  3,'Mikkey', phone='2039823473,28172834')
+session.commit()
 
-        # deletenumberclient(cur, 1, '47625348')
+name = input("Введите имя автора: ")
+result1 = session.query(Publisher, Book.name).filter(Publisher.name.like('%'+name+'%'))
+session.query(Book, Stock).join(Book, Book.id == Stock.book_id)
+session.query(Shop, Stock).join(Shop, Shop.id == Stock.shop_id)
+session.query(Sale, Stock).join(Sale, Stock.id == Sale.stock_id)
+# .join(Address, User.id == Address.user_id)\
+for c in result1.join(Book, Publisher.id == Book.publisher_id).all():
+    for i in session.query(Book.name, Shop.name, Sale.price, Sale.date_sale).filter(Book.name == c[1]).all():
+        print(i)
 
-        # deleteclient(cur, 1)
-
-        findclient(cur, email='sshdha@gmail.com', phone_number='34243438')
-
+session.close()
