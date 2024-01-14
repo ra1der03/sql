@@ -62,16 +62,8 @@ session.add_all([sale1, sale2, sale3, sale4, sale5, sale6, sale7, sale8, sale9])
 session.commit()
 
 name = input("Введите имя автора: ")
-# result1 = session.query(Publisher, Book.name).filter(Publisher.name.like('%'+name+'%'))
-# session.query(Book, Stock).join(Book, Book.id == Stock.book_id)
-# session.query(Shop, Stock).join(Shop, Shop.id == Stock.shop_id)
-# session.query(Sale, Stock).join(Sale, Stock.id == Sale.stock_id)
 id_publisher = session.query(Publisher.id).filter(Publisher.name.like('%'+name+'%')).scalar()
 for item in session.query(Book.name, Shop.name, Sale.price, Sale.date_sale).join(Sale.stock)\
                 .join(Stock.shop).join(Stock.book).filter(Book.publisher_id == id_publisher).all():
     print(item)
-# for c in result1.join(Book, Publisher.id == Book.publisher_id).all():
-#     for i in session.query(Book.name, Shop.name, Sale.price, Sale.date_sale).filter(Book.name == c[1]).all():
-#         print(i)
-
 session.close()
