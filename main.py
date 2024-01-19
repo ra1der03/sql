@@ -61,9 +61,28 @@ session.add_all([sale1, sale2, sale3, sale4, sale5, sale6, sale7, sale8, sale9])
 
 session.commit()
 
-name = input("Введите имя автора: ")
-id_publisher = session.query(Publisher.id).filter(Publisher.name.like('%'+name+'%')).scalar()
-for item in session.query(Book.name, Shop.name, Sale.price, Sale.date_sale).join(Sale.stock)\
-                .join(Stock.shop).join(Stock.book).filter(Book.publisher_id == id_publisher).all():
-    print(item)
+# name = input("Введите имя автора: ")
+# id_publisher = session.query(Publisher.id).filter(Publisher.name.like('%'+name+'%')).scalar()
+# for item in session.query(Book.name, Shop.name, Sale.price, Sale.date_sale).join(Sale.stock)\
+#                 .join(Stock.shop).join(Stock.book).filter(Book.publisher_id == id_publisher).all():
+#     print(item)
+
+def get_shops(word): #Функция принимает обязательный параметр
+    data = session.query(Book.name, Shop.name, Sale.price, Sale.date_sale
+    ).select_from(Shop).\
+        join(Shop.stock).\
+        join(Stock.book).\
+        join(Book.publisher).\
+        join(Stock.sale)
+    if word.isdigit():
+        answ = data.filter(Publisher.id == int(word)).all()
+    else:
+        answ = data.filter(Publisher.name.like('%'+word+'%')).all()
+    for Book.name, Shop.name, Sale.price, Sale.date_sale in answ:
+        print(f"{Book.name: <30} | {Shop.name: <10} | {Sale.price: <8} | {Sale.date_sale.strftime('%d-%m-%Y')}")
+
+
+if __name__ == '__main__':
+    word = input("Введите имя или id: ").capitalize()
+    get_shops(word)
 session.close()
